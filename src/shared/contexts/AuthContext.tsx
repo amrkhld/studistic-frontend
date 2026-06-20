@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 id: res.user_id,
                 email: res.email,
                 full_name: res.full_name || '',
-                department: 'Information Systems',
+                department: 'College of Computing & IT',
                 year: 1,
                 created_at: new Date().toISOString(),
             });
@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: res.user_id,
             email: res.email,
             full_name: res.full_name || data.full_name,
-            department: data.department || 'Information Systems',
+            department: data.department || 'College of Computing & IT',
             year: data.year || 1,
             created_at: new Date().toISOString(),
         });

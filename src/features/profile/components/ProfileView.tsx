@@ -13,13 +13,24 @@ import { ProfileEditForm } from './ProfileEditForm';
 import {
   Mail, Calendar, GraduationCap, Shield, MapPin,
   Pencil, X, Save, Loader2, CheckCircle2, AlertCircle, ChevronDown,
+  TrendingUp, ArrowUp, ArrowDown, Minus,
 } from 'lucide-react';
 import { Menu } from '@/shared/components/Menu';
 import { PredictionModal } from '@/shared/components/PredictionModal';
 
+const PREDEFINED_COLLEGES = [
+  'College of Computing & IT',
+  'College of Engineering',
+  'College of Business',
+  'College of Science',
+  'College of Humanities & Social Sciences',
+  'College of Art & Design',
+  'College of Medicine & Health Sciences',
+];
+
 export function ProfileView() {
   const { user } = useAuth();
-  const { features, prediction, isLoading, refresh } = usePrediction();
+  const { features, prediction, history = [], isLoading, refresh } = usePrediction();
   const { saveAll, uploadAvatar, isUpdating, error: saveError, successMessage, clearMessages, isPredicting, latestPredictionResult, closePredictionModal } = useProfile();
 
   // ─── Edit mode state ──────────────────────────────────────────────
@@ -31,6 +42,8 @@ export function ProfileView() {
   });
   const [editFeatures, setEditFeatures] = useState<StudentFeaturesPayload>({} as StudentFeaturesPayload);
   const [isUploading, setIsUploading] = useState(false);
+  const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; item: any } | null>(null);
+  const [isCustomActive, setIsCustomActive] = useState(false);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -48,11 +61,13 @@ export function ProfileView() {
 
   // Enter edit mode — snapshot current data
   const startEditing = useCallback(() => {
+    const dept = user?.department || 'College of Computing & IT';
     setEditProfile({
       full_name: user?.full_name || '',
-      department: user?.department || 'Information Systems',
+      department: dept,
       year: user?.year || 1,
     });
+    setIsCustomActive(!!(dept && !PREDEFINED_COLLEGES.includes(dept)));
     setEditFeatures({ ...features });
     clearMessages();
     setIsEditing(true);
@@ -200,7 +215,7 @@ export function ProfileView() {
                 <div className="flex flex-wrap gap-3">
                   <div>
                     <label className="text-[10px] font-semibold uppercase tracking-widest mb-1 block"
-                      style={{ color: 'var(--text-muted)' }}>Department</label>
+                      style={{ color: 'var(--text-muted)' }}>College / Faculty</label>
                     <Menu
                       align="left"
                       fullWidthDropdown
@@ -213,17 +228,19 @@ export function ProfileView() {
                             color: 'var(--foreground)',
                           }}
                         >
-                          <span>{editProfile.department || 'Select Department'}</span>
+                          <span>{editProfile.department || 'Select College'}</span>
                           <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
                         </div>
                       }
                       items={[
-                        { label: 'Information Systems', onClick: () => setEditProfile(prev => ({ ...prev, department: 'Information Systems' })) },
-                        { label: 'Computer Science', onClick: () => setEditProfile(prev => ({ ...prev, department: 'Computer Science' })) },
-                        { label: 'Software Engineering', onClick: () => setEditProfile(prev => ({ ...prev, department: 'Software Engineering' })) },
-                        { label: 'Data Science', onClick: () => setEditProfile(prev => ({ ...prev, department: 'Data Science' })) },
-                        { label: 'Cybersecurity', onClick: () => setEditProfile(prev => ({ ...prev, department: 'Cybersecurity' })) },
-                        { label: 'Other', onClick: () => setEditProfile(prev => ({ ...prev, department: 'Other' })) }
+                        { label: 'College of Computing & IT', onClick: () => { setEditProfile(prev => ({ ...prev, department: 'College of Computing & IT' })); setIsCustomActive(false); } },
+                        { label: 'College of Engineering', onClick: () => { setEditProfile(prev => ({ ...prev, department: 'College of Engineering' })); setIsCustomActive(false); } },
+                        { label: 'College of Business', onClick: () => { setEditProfile(prev => ({ ...prev, department: 'College of Business' })); setIsCustomActive(false); } },
+                        { label: 'College of Science', onClick: () => { setEditProfile(prev => ({ ...prev, department: 'College of Science' })); setIsCustomActive(false); } },
+                        { label: 'College of Humanities & Social Sciences', onClick: () => { setEditProfile(prev => ({ ...prev, department: 'College of Humanities & Social Sciences' })); setIsCustomActive(false); } },
+                        { label: 'College of Art & Design', onClick: () => { setEditProfile(prev => ({ ...prev, department: 'College of Art & Design' })); setIsCustomActive(false); } },
+                        { label: 'College of Medicine & Health Sciences', onClick: () => { setEditProfile(prev => ({ ...prev, department: 'College of Medicine & Health Sciences' })); setIsCustomActive(false); } },
+                        { label: 'Other (Custom...)', onClick: () => { setEditProfile(prev => ({ ...prev, department: '' })); setIsCustomActive(true); } }
                       ]}
                     />
                   </div>
@@ -253,6 +270,25 @@ export function ProfileView() {
                     />
                   </div>
                 </div>
+                {(isCustomActive || (editProfile.department && !PREDEFINED_COLLEGES.includes(editProfile.department))) && (
+                  <div className="mt-3 animate-fade-in">
+                    <label className="text-[10px] font-semibold uppercase tracking-widest mb-1 block" style={{ color: 'var(--text-muted)' }}>
+                      Specify College Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editProfile.department}
+                      onChange={(e) => setEditProfile(prev => ({ ...prev, department: e.target.value }))}
+                      placeholder="Enter custom college name..."
+                      className="px-3 py-2 rounded-xl text-[13px] outline-none w-full max-w-[320px]"
+                      style={{
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        color: 'var(--foreground)',
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             ) : (
               <>
@@ -367,6 +403,282 @@ export function ProfileView() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Prediction History & Score Progression */}
+          <div className="glass p-6 animate-slide-up stagger-5">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <TrendingUp size={15} strokeWidth={1.5} style={{ color: 'var(--accent-cyan)' }} />
+                <h3 className="text-[13px] font-semibold">Prediction History & Score Progression</h3>
+              </div>
+              <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Progression Analysis</span>
+            </div>
+
+            {history.length > 0 ? (
+              <>
+                {/* Visual Chart */}
+                <div className="relative w-full h-[280px] md:h-[320px] mb-6 select-none bg-white/[0.01] rounded-2xl border border-white/[0.03] p-4">
+                  <svg viewBox="0 0 1200 300" width="100%" height="100%" className="overflow-visible">
+                    <defs>
+                      <linearGradient id="chart-area-grad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="var(--accent-cyan)" stopOpacity="0.25" />
+                        <stop offset="100%" stopColor="var(--accent-cyan)" stopOpacity="0" />
+                      </linearGradient>
+                      <linearGradient id="chart-line-grad" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="var(--accent-cyan)" />
+                        <stop offset="100%" stopColor="var(--accent-purple)" />
+                      </linearGradient>
+                    </defs>
+
+                    {/* Horizontal Grid lines */}
+                    {(() => {
+                      const chronologicalHistory = [...history].reverse();
+                      const scores = chronologicalHistory.map(h => h.predicted_score);
+                      const rawMin = Math.min(...scores);
+                      const rawMax = Math.max(...scores);
+                      const minScore = Math.max(0, Math.floor(rawMin - 5));
+                      const maxScore = Math.min(100, Math.ceil(rawMax + 5));
+                      const scoreRange = maxScore - minScore || 10;
+
+                      const paddingLeft = 50;
+                      const paddingRight = 30;
+                      const paddingTop = 30;
+                      const paddingBottom = 40;
+
+                      const gridLines = Array.from({ length: 4 }).map((_, idx) => {
+                        const value = minScore + (idx / 3) * scoreRange;
+                        const y = paddingTop + (1 - (value - minScore) / scoreRange) * 230;
+                        return { y, value: Math.round(value) };
+                      });
+
+                      const points = chronologicalHistory.map((h, i) => {
+                        const x = chronologicalHistory.length > 1
+                          ? paddingLeft + (i / (chronologicalHistory.length - 1)) * 1120
+                          : paddingLeft + 560;
+                        const y = paddingTop + (1 - (h.predicted_score - minScore) / scoreRange) * 230;
+                        return { x, y, item: h };
+                      });
+
+                      const linePath = points.length > 0
+                        ? `M ${points[0].x} ${points[0].y} ` + points.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')
+                        : '';
+
+                      const areaPath = points.length > 0
+                        ? `${linePath} L ${points[points.length - 1].x} ${300 - paddingBottom} L ${points[0].x} ${300 - paddingBottom} Z`
+                        : '';
+
+                      const labelIndices = points.length <= 5
+                        ? points.map((_, i) => i)
+                        : [0, Math.floor(points.length / 2), points.length - 1];
+
+                      return (
+                        <>
+                          {/* Grid Lines */}
+                          {gridLines.map((line, idx) => (
+                            <g key={`grid-${idx}`}>
+                              <line x1={paddingLeft} y1={line.y} x2={1200 - paddingRight} y2={line.y} stroke="rgba(255, 255, 255, 0.05)" strokeWidth={1} strokeDasharray="3,3" />
+                              <text x={paddingLeft - 10} y={line.y + 4} fill="var(--text-muted)" fontSize="11" textAnchor="end" className="font-mono">
+                                {line.value}
+                              </text>
+                            </g>
+                          ))}
+
+                          {/* Gradient Area */}
+                          {areaPath && <path d={areaPath} fill="url(#chart-area-grad)" />}
+
+                          {/* Line Path */}
+                          {linePath && <path d={linePath} fill="none" stroke="url(#chart-line-grad)" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />}
+
+                          {/* Point Circles */}
+                          {points.map((p, idx) => {
+                            const isHovered = hoveredPoint?.item.id === p.item.id;
+                            const riskColor = p.item.risk_level === 'High Performer'
+                              ? 'var(--accent-green)' : p.item.risk_level === 'At Risk'
+                              ? 'var(--accent-red)' : 'var(--accent-amber)';
+
+                            return (
+                              <g key={`point-${idx}`}>
+                                {/* Hover Target */}
+                                <circle
+                                  cx={p.x}
+                                  cy={p.y}
+                                  r={16}
+                                  fill="transparent"
+                                  className="cursor-pointer"
+                                  onMouseEnter={() => setHoveredPoint(p)}
+                                  onMouseLeave={() => setHoveredPoint(null)}
+                                />
+                                {/* Glow backdrop for hovered point */}
+                                {isHovered && (
+                                  <circle
+                                    cx={p.x}
+                                    cy={p.y}
+                                    r={10}
+                                    fill={riskColor}
+                                    opacity={0.35}
+                                    className="transition-all duration-150 pointer-events-none"
+                                  />
+                                )}
+                                {/* Visible Point */}
+                                <circle
+                                  cx={p.x}
+                                  cy={p.y}
+                                  r={isHovered ? 6.5 : 5}
+                                  fill={riskColor}
+                                  stroke="#080d1f"
+                                  strokeWidth={1.5}
+                                  className="transition-all duration-150 pointer-events-none"
+                                />
+                              </g>
+                            );
+                          })}
+
+                          {/* X Axis Date Labels */}
+                          {points.map((p, idx) => {
+                            if (!labelIndices.includes(idx)) return null;
+                            const dateStr = new Date(p.item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                            return (
+                              <text key={`lbl-${idx}`} x={p.x} y={300 - 12} fill="var(--text-muted)" fontSize="11" textAnchor="middle">
+                                {dateStr}
+                              </text>
+                            );
+                          })}
+                        </>
+                      );
+                    })()}
+                  </svg>
+
+                  {/* HTML Tooltip overlay */}
+                  {hoveredPoint && (
+                    <div
+                      className="absolute p-3 rounded-xl pointer-events-none z-20 flex flex-col gap-1 shadow-2xl transition-all duration-150"
+                      style={{
+                        left: `${(hoveredPoint.x / 1200) * 100}%`,
+                        top: `${(hoveredPoint.y / 300) * 100}%`,
+                        transform: 'translate(-50%, calc(-100% - 15px))',
+                        minWidth: 150,
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        background: 'rgba(12, 16, 51, 0.95)',
+                        backdropFilter: 'blur(10px)',
+                      }}
+                    >
+                      <div className="text-[9px]" style={{ color: 'var(--text-muted)' }}>
+                        {new Date(hoveredPoint.item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>Score</span>
+                        <span className="text-[12px] font-bold font-mono" style={{ color: 'var(--accent-cyan)' }}>
+                          {hoveredPoint.item.predicted_score.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>Risk</span>
+                        <span className="text-[11px] font-semibold" style={{ color: hoveredPoint.item.risk_level === 'High Performer' ? 'var(--accent-green)' : hoveredPoint.item.risk_level === 'At Risk' ? 'var(--accent-red)' : 'var(--accent-amber)' }}>
+                          {hoveredPoint.item.risk_level}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>Confidence</span>
+                        <span className="text-[11px] font-semibold font-mono" style={{ color: 'var(--accent-purple)' }}>
+                          {hoveredPoint.item.confidence}%
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* History Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse min-w-[500px]">
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                        <th className="pb-3 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Date & Time</th>
+                        <th className="pb-3 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Model</th>
+                        <th className="pb-3 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Confidence</th>
+                        <th className="pb-3 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Risk Level</th>
+                        <th className="pb-3 text-[10px] font-semibold uppercase tracking-wider text-right" style={{ color: 'var(--text-muted)' }}>Predicted Score</th>
+                        <th className="pb-3 text-[10px] font-semibold uppercase tracking-wider text-right" style={{ color: 'var(--text-muted)' }}>Progression</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {history.map((item, idx) => {
+                        const olderItem = history[idx + 1];
+                        const diff = olderItem ? item.predicted_score - olderItem.predicted_score : null;
+
+                        const dateStr = new Date(item.created_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        });
+
+                        const timeStr = new Date(item.created_at).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        });
+
+                        return (
+                          <tr
+                            key={item.id}
+                            className="transition-colors hover:bg-white/[0.015]"
+                            style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                          >
+                            <td className="py-3 text-[12px] font-medium" style={{ color: 'var(--foreground)' }}>
+                              <div>{dateStr}</div>
+                              <div className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{timeStr}</div>
+                            </td>
+                            <td className="py-3 text-[12px]" style={{ color: 'var(--text-secondary)' }}>
+                              {item.model_used}
+                            </td>
+                            <td className="py-3 text-[12px] font-mono" style={{ color: 'var(--accent-purple)' }}>
+                              {item.confidence}%
+                            </td>
+                            <td className="py-3">
+                              <div className={getRiskBadgeClass(item.risk_level)}>
+                                {item.risk_level}
+                              </div>
+                            </td>
+                            <td className="py-3 text-[13px] font-bold text-right font-mono" style={{ color: 'var(--foreground)' }}>
+                              {item.predicted_score.toFixed(1)}
+                            </td>
+                            <td className="py-3 text-right">
+                              {diff !== null ? (
+                                <div className="flex items-center justify-end gap-1 text-[11px] font-bold font-mono">
+                                  {diff > 0 ? (
+                                    <>
+                                      <ArrowUp size={11} strokeWidth={2.5} style={{ color: 'var(--accent-green)' }} />
+                                      <span style={{ color: 'var(--accent-green)' }}>+{diff.toFixed(1)}</span>
+                                    </>
+                                  ) : diff < 0 ? (
+                                    <>
+                                      <ArrowDown size={11} strokeWidth={2.5} style={{ color: 'var(--accent-red)' }} />
+                                      <span style={{ color: 'var(--accent-red)' }}>{diff.toFixed(1)}</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Minus size={11} strokeWidth={2.5} style={{ color: 'var(--text-muted)' }} />
+                                      <span style={{ color: 'var(--text-muted)' }}>0.0</span>
+                                    </>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                                  Baseline
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-[12px]" style={{ color: 'var(--text-muted)' }}>No previous predictions recorded.</p>
+              </div>
+            )}
           </div>
         </>
       )}

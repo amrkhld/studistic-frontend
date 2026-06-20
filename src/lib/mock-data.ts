@@ -105,7 +105,7 @@ export const currentUser: User = {
     id: 'usr-001',
     email: 'student@studistic.com',
     full_name: 'Student User',
-    department: 'Information Systems',
+    department: 'College of Computing & IT',
     year: 3,
     created_at: '2024-09-01',
 };

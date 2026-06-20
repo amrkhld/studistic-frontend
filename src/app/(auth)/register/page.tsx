@@ -9,13 +9,24 @@ import Logo from '@/assets/general/logo-transparent.png';
 import { Mail, Lock, User, GraduationCap, Calendar, ArrowRight, Loader2, BarChart3, ShieldCheck, Zap, ChevronDown } from 'lucide-react';
 import { Menu } from '@/shared/components/Menu';
 
+const PREDEFINED_COLLEGES = [
+  'College of Computing & IT',
+  'College of Engineering',
+  'College of Business',
+  'College of Science',
+  'College of Humanities & Social Sciences',
+  'College of Art & Design',
+  'College of Medicine & Health Sciences',
+];
+
 export default function RegisterPage() {
     const router = useRouter();
     const { register } = useAuth();
     const [form, setForm] = useState({
         full_name: '', email: '', password: '', confirmPassword: '',
-        department: 'Information Systems', year: 1,
+        department: 'College of Computing & IT', year: 1,
     });
+    const [isCustomActive, setIsCustomActive] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -148,30 +159,44 @@ export default function RegisterPage() {
 
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="col-span-2">
-                                    <label htmlFor="register-department" className="text-[10px] font-semibold uppercase tracking-widest mb-1.5 block"
-                                        style={{ color: 'var(--text-muted)' }}>Department</label>
-                                    <div className="relative">
-                                        <GraduationCap size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none" style={{ color: 'var(--text-muted)' }} />
-                                        <Menu
-                                            align="left"
-                                            fullWidthDropdown
-                                            className="w-full"
-                                            trigger={
-                                                <div className="auth-input w-full pl-10 pr-4 py-2.5 rounded-xl text-[13px] outline-none cursor-pointer flex justify-between items-center transition-colors">
-                                                    <span>{form.department || 'Select Department'}</span>
-                                                    <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
-                                                </div>
-                                            }
-                                            items={[
-                                                { label: 'Information Systems', onClick: () => update('department', 'Information Systems') },
-                                                { label: 'Computer Science', onClick: () => update('department', 'Computer Science') },
-                                                { label: 'Software Engineering', onClick: () => update('department', 'Software Engineering') },
-                                                { label: 'Data Science', onClick: () => update('department', 'Data Science') },
-                                                { label: 'Cybersecurity', onClick: () => update('department', 'Cybersecurity') },
-                                                { label: 'Other', onClick: () => update('department', 'Other') }
-                                            ]}
-                                        />
-                                    </div>
+                                     <label htmlFor="register-department" className="text-[10px] font-semibold uppercase tracking-widest mb-1.5 block"
+                                         style={{ color: 'var(--text-muted)' }}>College / Faculty</label>
+                                     <div className="relative">
+                                         <GraduationCap size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none" style={{ color: 'var(--text-muted)' }} />
+                                         <Menu
+                                             align="left"
+                                             fullWidthDropdown
+                                             className="w-full"
+                                             trigger={
+                                                 <div className="auth-input w-full pl-10 pr-4 py-2.5 rounded-xl text-[13px] outline-none cursor-pointer flex justify-between items-center transition-colors">
+                                                     <span>{form.department || 'Select College'}</span>
+                                                     <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
+                                                 </div>
+                                             }
+                                             items={[
+                                                 { label: 'College of Computing & IT', onClick: () => { update('department', 'College of Computing & IT'); setIsCustomActive(false); } },
+                                                 { label: 'College of Engineering', onClick: () => { update('department', 'College of Engineering'); setIsCustomActive(false); } },
+                                                 { label: 'College of Business', onClick: () => { update('department', 'College of Business'); setIsCustomActive(false); } },
+                                                 { label: 'College of Science', onClick: () => { update('department', 'College of Science'); setIsCustomActive(false); } },
+                                                 { label: 'College of Humanities & Social Sciences', onClick: () => { update('department', 'College of Humanities & Social Sciences'); setIsCustomActive(false); } },
+                                                 { label: 'College of Art & Design', onClick: () => { update('department', 'College of Art & Design'); setIsCustomActive(false); } },
+                                                 { label: 'College of Medicine & Health Sciences', onClick: () => { update('department', 'College of Medicine & Health Sciences'); setIsCustomActive(false); } },
+                                                 { label: 'Other (Custom...)', onClick: () => { update('department', ''); setIsCustomActive(true); } }
+                                             ]}
+                                         />
+                                     </div>
+                                     {(isCustomActive || (form.department && !PREDEFINED_COLLEGES.includes(form.department))) && (
+                                         <div className="mt-1.5 animate-fade-in">
+                                             <input
+                                                 id="custom-college"
+                                                 type="text"
+                                                 value={form.department}
+                                                 onChange={(e) => update('department', e.target.value)}
+                                                 placeholder="Enter custom college name..."
+                                                 className="auth-input w-full px-4 py-2.5 rounded-xl text-[13px] outline-none"
+                                             />
+                                         </div>
+                                     )}
                                 </div>
                                 <div>
                                     <label htmlFor="register-year" className="text-[10px] font-semibold uppercase tracking-widest mb-1.5 block"
