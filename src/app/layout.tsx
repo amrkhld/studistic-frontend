@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 export const metadata: Metadata = {
   title: "Studistic — Student Performance Analytics",
   description: "AI-powered student performance monitoring & early-warning system.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
