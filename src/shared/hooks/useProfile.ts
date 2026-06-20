@@ -20,6 +20,8 @@ export function useProfile() {
     const [isUpdating, setIsUpdating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [isPredicting, setIsPredicting] = useState(false);
+    const [latestPredictionResult, setLatestPredictionResult] = useState<PredictionResult | null>(null);
 
     /**
      * Update user profile (name, department, year).
@@ -63,13 +65,17 @@ export function useProfile() {
             await apiUpdateMyFeatures(features, token);
 
             // 2. Auto-trigger prediction with new features
+            setIsPredicting(true);
+            setLatestPredictionResult(null);
             const prediction = await apiPredict(features, token);
+            setLatestPredictionResult(prediction);
 
             setSuccessMessage('Profile updated & prediction refreshed!');
             return prediction;
         } catch (err) {
             const msg = err instanceof Error ? err.message : 'Failed to update features';
             setError(msg);
+            setIsPredicting(false);
             return null;
         } finally {
             setIsUpdating(false);
@@ -102,13 +108,17 @@ export function useProfile() {
             await apiUpdateMyFeatures(features, token);
 
             // 3. Auto-predict
+            setIsPredicting(true);
+            setLatestPredictionResult(null);
             const prediction = await apiPredict(features, token);
+            setLatestPredictionResult(prediction);
 
             setSuccessMessage('All changes saved & prediction refreshed!');
             return prediction;
         } catch (err) {
             const msg = err instanceof Error ? err.message : 'Failed to save changes';
             setError(msg);
+            setIsPredicting(false);
             return null;
         } finally {
             setIsUpdating(false);
@@ -145,6 +155,11 @@ export function useProfile() {
         setSuccessMessage(null);
     }, []);
 
+    const closePredictionModal = useCallback(() => {
+        setIsPredicting(false);
+        setLatestPredictionResult(null);
+    }, []);
+
     return {
         updateUserProfile,
         updateFeaturesAndPredict,
@@ -153,6 +168,9 @@ export function useProfile() {
         isUpdating,
         error,
         successMessage,
+        isPredicting,
+        latestPredictionResult,
         clearMessages,
+        closePredictionModal,
     };
 }

@@ -1,13 +1,15 @@
 'use client';
 
 import '@/app/onboarding-slider.css';
+import '@/app/prediction-modal.css';
 import { useState, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/shared/contexts/AuthContext';
-import { apiUpdateMyFeatures, StudentFeaturesPayload } from '@/lib/api';
+import { apiUpdateMyFeatures, apiPredict, StudentFeaturesPayload, PredictionResult } from '@/lib/api';
 import { Slider, Pills, Toggle } from '@/shared/components/FormControls';
 import Logo from '@/assets/general/logo-transparent.png';
+import { PredictionModal } from '@/shared/components/PredictionModal';
 import {
     Clock, Target, Moon, BookOpen, Dumbbell, Users,
     Heart, GraduationCap, ArrowRight,
@@ -29,6 +31,8 @@ export default function OnboardingPage() {
     const [step, setStep] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [isPredicting, setIsPredicting] = useState(false);
+    const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null);
 
     const [f, setF] = useState<StudentFeaturesPayload>({
         hours_studied: 20, attendance: 80, sleep_hours: 7, previous_scores: 70,
@@ -54,13 +58,25 @@ export default function OnboardingPage() {
         setIsSubmitting(true);
         try {
             await apiUpdateMyFeatures(f, token);
-            router.push('/dashboard');
+            // Show prediction modal
+            setIsPredicting(true);
+            setPredictionResult(null);
+            const result = await apiPredict(f, token);
+            setPredictionResult(result);
         } catch (err) {
             console.error('Save failed:', err);
             setError('Failed to save — redirecting to dashboard...');
             setTimeout(() => router.push('/dashboard'), 1500);
+        } finally {
+            setIsSubmitting(false);
         }
     };
+
+    const handleModalClose = useCallback(() => {
+        setIsPredicting(false);
+        setPredictionResult(null);
+        router.push('/dashboard');
+    }, [router]);
 
     const next = () => step < 3 && setStep(step + 1);
     const back = () => step > 0 && setStep(step - 1);
@@ -246,6 +262,12 @@ export default function OnboardingPage() {
                     </div>
                 </div>
             </div>
+            {/* Prediction Modal */}
+            <PredictionModal
+                isOpen={isPredicting}
+                prediction={predictionResult}
+                onClose={handleModalClose}
+            />
         </div>
     );
 }

@@ -86,6 +86,8 @@ export function usePrediction() {
     const [prediction, setPrediction] = useState<PredictionResult | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isPredicting, setIsPredicting] = useState(false);
+    const [latestPredictionResult, setLatestPredictionResult] = useState<PredictionResult | null>(null);
 
     /**
      * Fetch cached data only — loads saved features + latest prediction from history.
@@ -164,10 +166,13 @@ export function usePrediction() {
     const predictNow = useCallback(async (newFeatures?: StudentFeaturesPayload) => {
         const featuresToPredict = newFeatures || features;
         setError(null);
+        setIsPredicting(true);
+        setLatestPredictionResult(null);
 
         try {
             const result = await apiPredict(featuresToPredict, token);
             setPrediction(result);
+            setLatestPredictionResult(result);
             if (newFeatures) {
                 setFeatures(newFeatures);
             }
@@ -175,9 +180,18 @@ export function usePrediction() {
         } catch (err) {
             console.warn('Prediction API unavailable:', err);
             setError('Prediction failed');
+            setIsPredicting(false);
             return null;
         }
     }, [token, features]);
+
+    /**
+     * Close the prediction modal overlay.
+     */
+    const closePredictionModal = useCallback(() => {
+        setIsPredicting(false);
+        setLatestPredictionResult(null);
+    }, []);
 
     /**
      * Run a sandboxed simulation of predictions without saving history in database.
@@ -199,5 +213,5 @@ export function usePrediction() {
         fetchCached();
     }, [fetchCached]);
 
-    return { features, prediction, isLoading, error, predictNow, simulatePrediction, refresh: fetchCached };
+    return { features, prediction, isLoading, error, isPredicting, latestPredictionResult, predictNow, simulatePrediction, closePredictionModal, refresh: fetchCached };
 }

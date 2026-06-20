@@ -1,5 +1,7 @@
 'use client';
 
+import '@/app/prediction-modal.css';
+
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/shared/contexts/AuthContext';
 import { usePrediction } from '@/shared/hooks/usePrediction';
@@ -13,11 +15,12 @@ import {
   Pencil, X, Save, Loader2, CheckCircle2, AlertCircle, ChevronDown,
 } from 'lucide-react';
 import { Menu } from '@/shared/components/Menu';
+import { PredictionModal } from '@/shared/components/PredictionModal';
 
 export function ProfileView() {
   const { user } = useAuth();
   const { features, prediction, isLoading, refresh } = usePrediction();
-  const { saveAll, uploadAvatar, isUpdating, error: saveError, successMessage, clearMessages } = useProfile();
+  const { saveAll, uploadAvatar, isUpdating, error: saveError, successMessage, clearMessages, isPredicting, latestPredictionResult, closePredictionModal } = useProfile();
 
   // ─── Edit mode state ──────────────────────────────────────────────
   const [isEditing, setIsEditing] = useState(false);
@@ -74,10 +77,16 @@ export function ProfileView() {
 
     if (result) {
       // Prediction succeeded — refresh cached data and exit edit mode
-      await refresh();
+      // (modal will handle the display, then onClose refreshes)
       setIsEditing(false);
     }
-  }, [saveAll, editProfile, editFeatures, refresh]);
+  }, [saveAll, editProfile, editFeatures]);
+
+  // Handle modal close — refresh cached prediction data
+  const handleModalClose = useCallback(async () => {
+    closePredictionModal();
+    await refresh();
+  }, [closePredictionModal, refresh]);
 
   // Feature change handler for edit form
   const handleFeatureChange = useCallback(<K extends keyof StudentFeaturesPayload>(
@@ -361,6 +370,12 @@ export function ProfileView() {
           </div>
         </>
       )}
+      {/* Prediction Modal */}
+      <PredictionModal
+        isOpen={isPredicting}
+        prediction={latestPredictionResult}
+        onClose={handleModalClose}
+      />
     </div>
   );
 }
