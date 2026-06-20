@@ -26,7 +26,7 @@ export function Menu({ trigger, items, align = 'right', position = 'bottom', cla
     useOnClickOutside(menuRef, () => setIsOpen(false));
 
     return (
-        <div className={`relative inline-block text-left ${className}`} ref={menuRef}>
+        <div className={`relative ${fullWidthDropdown ? 'w-full block' : 'inline-block'} text-left ${className}`} ref={menuRef}>
             <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer w-full h-full">
                 {trigger}
             </div>

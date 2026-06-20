@@ -129,6 +129,8 @@ export function GPASimulator({ grades, currentGPA, currentCredits, currentPoints
                         <label className="text-[10px] font-semibold uppercase tracking-widest mb-1.5 block" style={{ color: 'var(--text-muted)' }}>Credits</label>
                         <Menu
                             align="left"
+                            position="top"
+                            className="w-full"
                             fullWidthDropdown
                             trigger={
                                 <div 
@@ -150,6 +152,8 @@ export function GPASimulator({ grades, currentGPA, currentCredits, currentPoints
                         <label className="text-[10px] font-semibold uppercase tracking-widest mb-1.5 block" style={{ color: 'var(--text-muted)' }}>Target Grade</label>
                         <Menu
                             align="left"
+                            position="top"
+                            className="w-full"
                             fullWidthDropdown
                             trigger={
                                 <div 
