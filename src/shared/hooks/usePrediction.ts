@@ -101,7 +101,9 @@ export function usePrediction() {
             if (token) {
                 try {
                     const dbFeatures = await apiGetMyFeatures(token);
-                    userFeatures = dbFeatures;
+                    if (dbFeatures) {
+                        userFeatures = dbFeatures;
+                    }
                 } catch {
                     // No saved features yet — use defaults
                 }
