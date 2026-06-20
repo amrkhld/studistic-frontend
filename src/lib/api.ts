@@ -32,6 +32,13 @@ export async function apiFetch<T>(
         ...rest,
     });
 
+    if (response.status === 401 && token) {
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('studistic_token');
+            window.location.href = '/login?expired=true';
+        }
+    }
+
     if (!response.ok) {
         const error = await response.json().catch(() => ({ detail: response.statusText }));
         throw new Error(error.detail || `API Error: ${response.status}`);
