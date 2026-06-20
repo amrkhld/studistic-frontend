@@ -188,7 +188,7 @@ export interface GradeData {
 }
 
 export async function apiGetGrades(token: string) {
-    return apiFetch<GradeData[]>('/grades', { token });
+    return apiFetch<GradeData[]>('/grades/', { token });
 }
 
 export async function apiUploadAvatar(file: File, token: string) {
@@ -219,7 +219,7 @@ export async function apiUploadAvatar(file: File, token: string) {
 }
 
 export async function apiAddGrade(grade: Omit<GradeData, 'id' | 'user_id'>, token: string) {
-    return apiFetch<GradeData>('/grades', {
+    return apiFetch<GradeData>('/grades/', {
         method: 'POST',
         body: JSON.stringify(grade),
         token,
@@ -246,14 +246,14 @@ export interface TaskData {
 }
 
 export async function apiGetTasks(token: string) {
-    return apiFetch<TaskData[]>('/tasks', { token });
+    return apiFetch<TaskData[]>('/tasks/', { token });
 }
 
 export async function apiCreateTask(
     task: Omit<TaskData, 'id' | 'user_id'>,
     token: string
 ) {
-    return apiFetch<TaskData>('/tasks', {
+    return apiFetch<TaskData>('/tasks/', {
         method: 'POST',
         body: JSON.stringify(task),
         token,
