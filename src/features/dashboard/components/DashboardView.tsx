@@ -5,6 +5,7 @@ import { usePrediction } from '@/shared/hooks/usePrediction';
 import { useStats } from '@/shared/hooks/useStats';
 import { getRiskBadgeClass, getRiskColor } from '@/lib/mock-data';
 import { LoadingPage } from '@/shared/components/LoadingSkeleton';
+import { useState } from 'react';
 import {
   TrendingUp,
   Clock,
@@ -14,12 +15,37 @@ import {
   Activity,
   Lightbulb,
   Sparkles,
+  Lock,
+  Send,
+  Loader2,
 } from 'lucide-react';
+import { apiAskGeminiConsultant } from '@/lib/api';
+import { PremiumUpgradeModal } from '@/shared/components/PremiumUpgradeModal';
 
 export function DashboardView() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { features, prediction, isLoading: predLoading } = usePrediction();
   const { stats, isLoading: statsLoading } = useStats();
+  const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [answer, setAnswer] = useState('');
+  const [isPending, setIsPending] = useState(false);
+
+  const handleAskConsultant = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim() || !token) return;
+
+    setIsPending(true);
+    try {
+      const res = await apiAskGeminiConsultant(query, features, prediction?.predicted_score || null, token);
+      setAnswer(res.answer);
+    } catch (err) {
+      console.error(err);
+      setAnswer('Sorry, the AI consultant could not process your query at this time. Please check your connection.');
+    } finally {
+      setIsPending(false);
+    }
+  };
 
   if (predLoading || statsLoading || !prediction || !stats) {
     return <LoadingPage />;
@@ -71,10 +97,83 @@ export function DashboardView() {
         </div>
       </header>
 
-      {/* Top — Prediction + Metrics */}
+      {/* Top — AI Consultant + Prediction */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* AI Consultant */}
+        <div className="lg:col-span-8 glass p-6 relative overflow-hidden animate-slide-up stagger-1">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles size={15} strokeWidth={1.5} style={{ color: 'var(--accent-purple)' }} />
+            <h2 className="text-[14px] font-semibold">Studistic AI Consultant</h2>
+          </div>
+          
+          {!user?.is_premium ? (
+            <div className="text-center py-4 flex flex-col items-center gap-3">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white/5" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+                <Lock size={16} style={{ color: 'var(--text-secondary)' }} />
+              </div>
+              <p className="text-[12px] leading-relaxed max-w-[220px]" style={{ color: 'var(--text-secondary)' }}>
+                Unlock personalized academic advice and smart questions with Studistic Pro.
+              </p>
+              <button
+                onClick={() => setIsUpgradeOpen(true)}
+                className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold text-white transition-all cursor-pointer"
+                style={{
+                  background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))',
+                }}
+              >
+                Unlock AI Coach
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+                Ask about your study habits, performance tips, or exam prep strategies.
+              </p>
+              <form onSubmit={handleAskConsultant} className="flex gap-2">
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="e.g. How can I balance study and sleep?"
+                  disabled={isPending}
+                  className="flex-1 px-3 py-2 rounded-xl text-[12px] outline-none transition-colors border"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    borderColor: 'rgba(255, 255, 255, 0.08)',
+                    color: 'var(--foreground)'
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={isPending || !query.trim()}
+                  className="px-3 py-2 rounded-xl font-bold text-[12px] transition-all cursor-pointer text-white shrink-0 flex items-center gap-1.5"
+                  style={{
+                    background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))',
+                    opacity: isPending || !query.trim() ? 0.7 : 1,
+                  }}
+                >
+                  {isPending ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                  Ask
+                </button>
+              </form>
+              
+              {answer && (
+                <div className="glass-subtle p-3 rounded-xl border border-white/[0.04] bg-white/[0.01] animate-fade-in max-h-36 overflow-y-auto">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <Sparkles size={11} style={{ color: 'var(--accent-cyan)' }} />
+                    <span className="text-[9px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-secondary)' }}>AI Advisor Response</span>
+                  </div>
+                  <p className="text-[11.5px] leading-relaxed text-[var(--foreground)]" style={{ whiteSpace: 'pre-line' }}>
+                    {answer}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Prediction */}
-        <div className="lg:col-span-4 glass glow-cyan p-6 animate-slide-up stagger-1">
+        <div className="lg:col-span-4 glass glow-cyan p-6 animate-slide-up stagger-2">
           <div className="flex items-center gap-2 mb-5">
             <Sparkles size={15} style={{ color: 'var(--accent-cyan)' }} />
             <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>
@@ -95,32 +194,32 @@ export function DashboardView() {
             <span>{prediction.confidence}% confidence</span>
           </div>
         </div>
-
-        {/* Metrics */}
-        <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: 'Attendance', value: `${features.attendance}%`, target: '90%+', icon: Target, color: 'var(--accent-cyan)', pct: features.attendance },
-            { label: 'Study Hours', value: `${features.hours_studied}h`, target: '30h/wk', icon: Clock, color: 'var(--accent-green)', pct: (features.hours_studied / 44) * 100 },
-            { label: 'Prev. Scores', value: `${features.previous_scores}`, target: 'Avg: 75', icon: BookOpen, color: 'var(--accent-amber)', pct: features.previous_scores },
-            { label: 'Sleep', value: `${features.sleep_hours}h`, target: '7\u20138h ideal', icon: Moon, color: 'var(--accent-purple)', pct: (features.sleep_hours / 10) * 100 },
-          ].map((m, i) => (
-            <div key={m.label} className={`glass p-5 animate-slide-up stagger-${i + 2}`}>
-              <m.icon size={16} strokeWidth={1.5} style={{ color: m.color, marginBottom: 12 }} />
-              <div className="text-[22px] font-semibold mb-0.5" style={{ color: 'var(--foreground)' }}>{m.value}</div>
-              <div className="text-[11px] font-medium mb-3" style={{ color: 'var(--text-muted)' }}>{m.label}</div>
-              <div className="metric-bar">
-                <div className="metric-bar-fill" style={{ width: `${m.pct}%`, background: m.color }} />
-              </div>
-              <div className="text-[10px] mt-1.5" style={{ color: 'var(--text-muted)' }}>{m.target}</div>
-            </div>
-          ))}
-        </div>
       </div>
 
-      {/* Mid — Feature Importance + Recommendations */}
+      {/* Mid — Metrics */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Attendance', value: `${features.attendance}%`, target: '90%+', icon: Target, color: 'var(--accent-cyan)', pct: features.attendance },
+          { label: 'Study Hours', value: `${features.hours_studied}h`, target: '30h/wk', icon: Clock, color: 'var(--accent-green)', pct: (features.hours_studied / 44) * 100 },
+          { label: 'Prev. Scores', value: `${features.previous_scores}`, target: 'Avg: 75', icon: BookOpen, color: 'var(--accent-amber)', pct: features.previous_scores },
+          { label: 'Sleep', value: `${features.sleep_hours}h`, target: '7\u20138h ideal', icon: Moon, color: 'var(--accent-purple)', pct: (features.sleep_hours / 10) * 100 },
+        ].map((m, i) => (
+          <div key={m.label} className={`glass p-5 animate-slide-up stagger-${i + 3}`}>
+            <m.icon size={16} strokeWidth={1.5} style={{ color: m.color, marginBottom: 12 }} />
+            <div className="text-[22px] font-semibold mb-0.5" style={{ color: 'var(--foreground)' }}>{m.value}</div>
+            <div className="text-[11px] font-medium mb-3" style={{ color: 'var(--text-muted)' }}>{m.label}</div>
+            <div className="metric-bar">
+              <div className="metric-bar-fill" style={{ width: `${m.pct}%`, background: m.color }} />
+            </div>
+            <div className="text-[10px] mt-1.5" style={{ color: 'var(--text-muted)' }}>{m.target}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Bottom — Feature Importance + Recommendations */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Feature Importance */}
-        <div className="lg:col-span-7 glass p-6 animate-slide-up stagger-5">
+        <div className="lg:col-span-7 glass p-6 animate-slide-up stagger-7">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
               <Activity size={15} strokeWidth={1.5} style={{ color: 'var(--accent-cyan)' }} />
@@ -154,7 +253,7 @@ export function DashboardView() {
         </div>
 
         {/* Recommendations */}
-        <div className="lg:col-span-5 glass p-6 animate-slide-up stagger-6">
+        <div className="lg:col-span-5 glass p-6 animate-slide-up stagger-8">
           <div className="flex items-center gap-2 mb-5">
             <Lightbulb size={15} strokeWidth={1.5} style={{ color: 'var(--accent-amber)' }} />
             <h2 className="text-[14px] font-semibold">Recommendations</h2>
@@ -212,6 +311,10 @@ export function DashboardView() {
           ))}
         </div>
       </div>
+
+      {isUpgradeOpen && (
+        <PremiumUpgradeModal isOpen={isUpgradeOpen} onClose={() => setIsUpgradeOpen(false)} />
+      )}
     </div>
   );
 }

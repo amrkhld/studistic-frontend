@@ -11,6 +11,7 @@ interface User {
     year: number;
     avatar_url?: string;
     created_at: string;
+    is_premium?: boolean;
 }
 
 interface AuthContextType {
@@ -49,7 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
             try {
                 const profile = await apiGetMe(savedToken);
-                setUser(profile as User);
+                const isPremium = localStorage.getItem('studistic_is_premium') === 'true';
+                setUser({ ...profile, is_premium: isPremium } as User);
             } catch {
                 localStorage.removeItem(TOKEN_KEY);
                 setToken(null);
@@ -67,8 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Fetch full profile
         try {
             const profile = await apiGetMe(res.access_token);
-            setUser(profile as User);
+            const isPremium = localStorage.getItem('studistic_is_premium') === 'true';
+            setUser({ ...profile, is_premium: isPremium } as User);
         } catch {
+            const isPremium = localStorage.getItem('studistic_is_premium') === 'true';
             setUser({
                 id: res.user_id,
                 email: res.email,
@@ -76,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 department: 'College of Computing & IT',
                 year: 1,
                 created_at: new Date().toISOString(),
+                is_premium: isPremium,
             });
         }
     }, []);
@@ -103,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(TOKEN_KEY, accessToken);
 
         // Set user immediately (don't wait for /me which may fail for new users)
+        const isPremium = localStorage.getItem('studistic_is_premium') === 'true';
         setUser({
             id: res.user_id,
             email: res.email,
@@ -110,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             department: data.department || 'College of Computing & IT',
             year: data.year || 1,
             created_at: new Date().toISOString(),
+            is_premium: isPremium,
         });
     }, []);
 
@@ -120,6 +127,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const updateUser = useCallback((updates: Partial<User>) => {
+        if (updates.is_premium !== undefined) {
+            localStorage.setItem('studistic_is_premium', updates.is_premium ? 'true' : 'false');
+        }
         setUser(prev => prev ? { ...prev, ...updates } : prev);
     }, []);
 

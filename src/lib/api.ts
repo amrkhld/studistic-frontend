@@ -313,3 +313,58 @@ export async function apiGetDatasetStats() {
 export async function apiGetRiskDistribution() {
     return apiFetch<RiskDistItem[]>('/stats/risk-distribution');
 }
+
+// ─── Gemini AI Services ──────────────────────────────────────────────────────
+
+export interface GeminiRecommendation {
+    id: number;
+    title: string;
+    description: string;
+    priority: 'high' | 'medium' | 'low';
+    icon: string;
+}
+
+export interface GeminiSuggestedTask {
+    title: string;
+    description: string;
+    priority: 'high' | 'medium' | 'low';
+    due_date: string;
+}
+
+export async function apiAskGeminiConsultant(
+    query: string,
+    features: StudentFeaturesPayload | null,
+    predictedScore: number | null,
+    token: string
+) {
+    return apiFetch<{ answer: string }>('/gemini/consultant', {
+        method: 'POST',
+        body: JSON.stringify({ query, features, predicted_score: predictedScore }),
+        token,
+    });
+}
+
+export async function apiGetGeminiRecommendations(
+    features: StudentFeaturesPayload,
+    predictedScore: number,
+    token: string
+) {
+    return apiFetch<GeminiRecommendation[]>('/gemini/recommendations', {
+        method: 'POST',
+        body: JSON.stringify({ features, predicted_score: predictedScore }),
+        token,
+    });
+}
+
+export async function apiGetGeminiSuggestedTasks(
+    features: StudentFeaturesPayload,
+    predictedScore: number,
+    token: string
+) {
+    return apiFetch<GeminiSuggestedTask[]>('/gemini/suggested-tasks', {
+        method: 'POST',
+        body: JSON.stringify({ features, predicted_score: predictedScore }),
+        token,
+    });
+}
+

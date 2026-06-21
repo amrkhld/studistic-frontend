@@ -13,10 +13,11 @@ import { ProfileEditForm } from './ProfileEditForm';
 import {
   Mail, Calendar, GraduationCap, Shield, MapPin,
   Pencil, X, Save, Loader2, CheckCircle2, AlertCircle, ChevronDown,
-  TrendingUp, ArrowUp, ArrowDown, Minus,
+  TrendingUp, ArrowUp, ArrowDown, Minus, Sparkles,
 } from 'lucide-react';
 import { Menu } from '@/shared/components/Menu';
 import { PredictionModal } from '@/shared/components/PredictionModal';
+import { PremiumUpgradeModal } from '@/shared/components/PremiumUpgradeModal';
 
 const PREDEFINED_COLLEGES = [
   'College of Computing & IT',
@@ -29,12 +30,13 @@ const PREDEFINED_COLLEGES = [
 ];
 
 export function ProfileView() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { features, prediction, history = [], isLoading, refresh } = usePrediction();
   const { saveAll, uploadAvatar, isUpdating, error: saveError, successMessage, clearMessages, isPredicting, latestPredictionResult, closePredictionModal } = useProfile();
 
   // ─── Edit mode state ──────────────────────────────────────────────
   const [isEditing, setIsEditing] = useState(false);
+  const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
   const [editProfile, setEditProfile] = useState({
     full_name: '',
     department: '',
@@ -680,6 +682,104 @@ export function ProfileView() {
               </div>
             )}
           </div>
+
+          {/* Premium Subscription Section */}
+          {!user?.is_premium ? (
+            /* Free Tier Advertising Banner */
+            <div className="glass p-6 animate-slide-up stagger-6 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-white/[0.04] bg-white/[0.01]"
+              style={{
+                boxShadow: '0 8px 32px rgba(167, 139, 250, 0.05)',
+              }}>
+              {/* Decorative blobs */}
+              <div className="absolute -top-24 -left-24 w-48 h-48 rounded-full blur-3xl pointer-events-none"
+                style={{ background: 'radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%)' }} />
+              <div className="absolute -bottom-24 -right-24 w-48 h-48 rounded-full blur-3xl pointer-events-none"
+                style={{ background: 'radial-gradient(circle, rgba(167, 139, 250, 0.15) 0%, transparent 70%)' }} />
+
+              <div className="relative z-10 flex-1 space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white"
+                  style={{
+                    background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                  }}>
+                  <Sparkles size={10} className="animate-pulse" />
+                  Limited Offer: Upgrade to Pro
+                </div>
+                <h3 className="text-[16px] font-bold" style={{ color: 'var(--foreground)' }}>
+                  Unlock the full potential of Studistic's AI core
+                </h3>
+                <p className="text-[12px] max-w-[580px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  Get access to deep neural network analysis, track up to 100+ predictions, and receive custom personalized AI study guides designed to elevate your grade progression.
+                </p>
+                <div className="flex flex-wrap gap-4 pt-1">
+                  <span className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--accent-cyan)' }}>
+                    <CheckCircle2 size={13} strokeWidth={2} /> Deep Neural Network Mode
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--accent-purple)' }}>
+                    <CheckCircle2 size={13} strokeWidth={2} /> Extended 100+ History Logs
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--accent-green)' }}>
+                    <CheckCircle2 size={13} strokeWidth={2} /> Personalized AI Guidance
+                  </span>
+                </div>
+              </div>
+
+              <div className="relative z-10 shrink-0 text-center md:text-right flex flex-col items-center md:items-end gap-2.5">
+                <div className="text-[18px] font-bold" style={{ color: 'var(--foreground)' }}>
+                  $4.99<span className="text-[12px] font-normal" style={{ color: 'var(--text-muted)' }}> / month</span>
+                </div>
+                <button
+                  onClick={() => setIsUpgradeOpen(true)}
+                  className="px-5 py-2.5 rounded-xl text-[12px] font-bold transition-all duration-200 cursor-pointer text-center text-white"
+                  style={{
+                    background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))',
+                    boxShadow: '0 4px 16px rgba(56, 189, 248, 0.25)',
+                  }}
+                >
+                  Unlock Studistic Pro
+                </button>
+                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Mock billing system active</span>
+              </div>
+            </div>
+          ) : (
+            /* Premium Tier Status Card */
+            <div className="glass p-6 animate-slide-up stagger-6 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-white/[0.04] bg-white/[0.01]">
+              <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full blur-3xl pointer-events-none"
+                style={{ background: 'radial-gradient(circle, rgba(52, 211, 153, 0.12) 0%, transparent 70%)' }} />
+
+              <div className="relative z-10 flex-1 space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-[var(--accent-green)] bg-[rgba(52,211,153,0.12)] border border-[rgba(52,211,153,0.25)]">
+                  <CheckCircle2 size={10} />
+                  Subscription Active
+                </div>
+                <h3 className="text-[16px] font-bold flex items-center gap-1.5" style={{ color: 'var(--foreground)' }}>
+                  Studistic Pro
+                  <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider text-white"
+                    style={{
+                      background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))',
+                    }}>
+                    PRO TIER
+                  </span>
+                </h3>
+                <p className="text-[12px] max-w-[580px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  Your account is upgraded to the Mock Academic Plan. You have unlimited access to all premium ML models, progression tracking tools, and AI recommendation widgets.
+                </p>
+                <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                  Next mock renewal date: {new Date(new Date().setDate(new Date().getDate() + 30)).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </div>
+              </div>
+
+              <div className="relative z-10 shrink-0 text-center md:text-right flex flex-col items-center md:items-end gap-2.5">
+                <button
+                  onClick={() => updateUser({ is_premium: false })}
+                  className="px-4 py-2 rounded-xl text-[12px] font-semibold transition-all cursor-pointer border border-red-500/20 text-[#f87171] hover:bg-red-500/10"
+                >
+                  Downgrade to Free
+                </button>
+                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Instantly cancel & reset state</span>
+              </div>
+            </div>
+          )}
         </>
       )}
       {/* Prediction Modal */}
@@ -688,6 +788,13 @@ export function ProfileView() {
         prediction={latestPredictionResult}
         onClose={handleModalClose}
       />
+      {/* Upgrade Checkout Modal */}
+      {isUpgradeOpen && (
+        <PremiumUpgradeModal
+          isOpen={isUpgradeOpen}
+          onClose={() => setIsUpgradeOpen(false)}
+        />
+      )}
     </div>
   );
 }

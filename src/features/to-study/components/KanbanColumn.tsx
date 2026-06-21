@@ -13,9 +13,10 @@ interface KanbanColumnProps {
     tasks: TaskData[];
     onEditTask: (task: TaskData) => void;
     onDeleteTask: (id: string) => void;
+    suggestedTasks?: React.ReactNode;
 }
 
-export function KanbanColumn({ id, title, dot, tasks, onEditTask, onDeleteTask }: KanbanColumnProps) {
+export function KanbanColumn({ id, title, dot, tasks, onEditTask, onDeleteTask, suggestedTasks }: KanbanColumnProps) {
     const { setNodeRef, isOver } = useDroppable({
         id,
         data: { type: 'Column', column: { id, title } }
@@ -52,7 +53,9 @@ export function KanbanColumn({ id, title, dot, tasks, onEditTask, onDeleteTask }
                         ))}
                     </SortableContext>
 
-                    {tasks.length === 0 && (
+                    {suggestedTasks}
+
+                    {tasks.length === 0 && !suggestedTasks && (
                         <div className="text-center py-10 rounded-xl mt-2" style={{ border: '1px dashed rgba(255,255,255,0.06)' }}>
                             <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Drop tasks here</p>
                         </div>

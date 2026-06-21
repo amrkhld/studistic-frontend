@@ -6,6 +6,7 @@ import {
     apiPredict,
     apiGetMyFeatures,
     apiGetPredictionHistory,
+    apiGetGeminiRecommendations,
     PredictionResult,
     StudentFeaturesPayload,
 } from '@/lib/api';
@@ -90,7 +91,7 @@ export interface PredictionHistoryItem {
 }
 
 export function usePrediction() {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const [features, setFeatures] = useState<StudentFeaturesPayload>(DEFAULT_FEATURES);
     const [prediction, setPrediction] = useState<PredictionResult | null>(null);
     const [history, setHistory] = useState<PredictionHistoryItem[]>([]);
@@ -162,11 +163,32 @@ export function usePrediction() {
 
             // If we have a cached prediction, use it; otherwise fall back to mock
             if (cachedPrediction) {
+                if (user?.is_premium && token) {
+                    try {
+                        const geminiRecs = await apiGetGeminiRecommendations(userFeatures, cachedPrediction.predicted_score, token);
+                        if (geminiRecs && geminiRecs.length > 0) {
+                            cachedPrediction.recommendations = geminiRecs;
+                        }
+                    } catch (e) {
+                        console.warn('Failed to load Gemini recommendations for cache:', e);
+                    }
+                }
                 setPrediction(cachedPrediction);
             } else {
                 // No cached prediction exists (new user or never predicted)
                 // Fall back to mock data so the UI isn't empty
-                setPrediction(buildMockPrediction());
+                const mockPred = buildMockPrediction();
+                if (user?.is_premium && token) {
+                    try {
+                        const geminiRecs = await apiGetGeminiRecommendations(userFeatures, mockPred.predicted_score, token);
+                        if (geminiRecs && geminiRecs.length > 0) {
+                            mockPred.recommendations = geminiRecs;
+                        }
+                    } catch (e) {
+                        console.warn('Failed to load Gemini recommendations for mock cache:', e);
+                    }
+                }
+                setPrediction(mockPred);
                 if (!token) setError('Using offline data');
             }
 
@@ -247,6 +269,16 @@ export function usePrediction() {
 
         try {
             const result = await apiPredict(featuresToPredict, token);
+            if (user?.is_premium && token) {
+                try {
+                    const geminiRecs = await apiGetGeminiRecommendations(featuresToPredict, result.predicted_score, token);
+                    if (geminiRecs && geminiRecs.length > 0) {
+                        result.recommendations = geminiRecs;
+                    }
+                } catch (e) {
+                    console.warn('Failed to load Gemini recommendations for new prediction:', e);
+                }
+            }
             setPrediction(result);
             setLatestPredictionResult(result);
             if (newFeatures) {

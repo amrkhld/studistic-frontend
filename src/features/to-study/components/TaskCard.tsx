@@ -2,7 +2,7 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Calendar, GripVertical, Trash2, Edit2, MoreVertical } from 'lucide-react';
+import { Calendar, GripVertical, Trash2, Edit2, MoreVertical, Sparkles } from 'lucide-react';
 import { TaskData } from '@/lib/api';
 import { forwardRef } from 'react';
 import { Menu } from '@/shared/components/Menu';
@@ -38,6 +38,11 @@ function PriorityDot({ priority }: { priority: string }) {
 export const TaskCardNode = forwardRef<HTMLDivElement, TaskCardNodeProps>(({
     task, onEdit, onDelete, isOverlay, isDragging, attributes, listeners, style
 }, ref) => {
+    const isSuggested = task.description?.includes('[AI Suggested]');
+    const displayDescription = task.description
+        ? task.description.replace('[AI Suggested]', '').trim()
+        : '';
+
     return (
         <div
             ref={ref}
@@ -62,25 +67,40 @@ export const TaskCardNode = forwardRef<HTMLDivElement, TaskCardNodeProps>(({
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                         <PriorityDot priority={task.priority} />
-                        <span className="text-[13px] font-semibold tracking-wide" style={{ color: 'var(--foreground)' }}>
-                            {task.title}
+                        <span className="text-[13px] font-semibold tracking-wide flex items-center gap-1.5" style={{ color: 'var(--foreground)' }}>
+                            <span className="truncate">{task.title}</span>
+                            {isSuggested && (
+                                <Sparkles size={11} className="text-purple-400 animate-pulse shrink-0" style={{ color: 'var(--accent-purple)' }} />
+                            )}
                         </span>
                     </div>
                     
-                    {task.description && (
+                    {displayDescription && (
                         <p className="text-[11px] mb-2 line-clamp-2 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                            {task.description}
+                            {displayDescription}
                         </p>
                     )}
                     
-                    {task.due_date && (
-                        <div className="flex items-center gap-1.5 mt-2">
-                            <Calendar size={11} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} />
-                            <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>
-                                {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    <div className="flex flex-wrap items-center gap-2.5 mt-2">
+                        {isSuggested && (
+                            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider text-white shrink-0 scale-90 -ml-1.5"
+                                style={{
+                                    background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.25), rgba(56, 189, 248, 0.25))',
+                                    border: '1px solid rgba(167, 139, 250, 0.3)',
+                                    color: 'var(--accent-purple)'
+                                }}>
+                                Suggested
                             </span>
-                        </div>
-                    )}
+                        )}
+                        {task.due_date && (
+                            <div className="flex items-center gap-1.5">
+                                <Calendar size={11} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} />
+                                <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                                    {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                </span>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 

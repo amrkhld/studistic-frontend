@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import "./prediction-modal.css";
 import { AuthProvider } from "@/shared/contexts/AuthContext";
 import { AppShell } from "@/shared/components/AppShell";
 
