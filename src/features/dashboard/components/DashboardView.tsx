@@ -58,23 +58,23 @@ export function DashboardView() {
     <div className="p-6 lg:p-8 space-y-6 animate-fade-in ">
       {/* Welcome Section */}
       {user && (
-        <div className="flex items-center gap-4 mb-2">
-          <div className="w-12 h-12 rounded-full overflow-hidden bg-cover bg-center shrink-0"
+        <div className="flex flex-col items-center justify-center text-center gap-4 mb-6 py-8 max-w-2xl mx-auto animate-fade-in">
+          <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden bg-cover bg-center shrink-0 border-2 border-white/10 shadow-xl"
                style={{
                  background: user.avatar_url ? `url(${user.avatar_url}) center/cover` : 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))',
                  color: '#fff',
                }}>
             {!user.avatar_url && (
-              <div className="w-full h-full flex items-center justify-center text-sm font-bold">
+              <div className="w-full h-full flex items-center justify-center text-2xl md:text-3xl font-bold">
                 {(user.full_name || 'U').charAt(0).toUpperCase()}
               </div>
             )}
           </div>
           <div>
-            <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: 'var(--foreground)' }}>
+            <h1 className="text-[28px] md:text-[36px] font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
               Welcome back, {user.full_name.split(' ')[0]}!
             </h1>
-            <p className="text-[13px] mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-[14px] md:text-[16px] mt-1" style={{ color: 'var(--text-secondary)' }}>
               Here's your performance overview for today.
             </p>
           </div>
@@ -230,84 +230,82 @@ export function DashboardView() {
         ))}
       </div>
 
-      {/* Bottom — Feature Importance + Recommendations */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Feature Importance */}
-        <div className="lg:col-span-7 glass p-6 animate-slide-up stagger-7">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
-              <Activity size={15} strokeWidth={1.5} style={{ color: 'var(--accent-cyan)' }} />
-              <h2 className="text-[14px] font-semibold">Top Performance Factors</h2>
-            </div>
-            <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Model Analysis</span>
+      {/* Feature Importance Row */}
+      <div className="glass p-6 animate-slide-up stagger-7">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <Activity size={15} strokeWidth={1.5} style={{ color: 'var(--accent-cyan)' }} />
+            <h2 className="text-[14px] font-semibold">Top Performance Factors</h2>
           </div>
-          <div className="space-y-3.5">
-            {prediction.feature_importances.slice(0, 7).map((f, i) => (
-              <div key={f.feature} className="flex items-center gap-3">
-                <span className="text-[12px] w-[110px] truncate" style={{ color: 'var(--text-secondary)' }}>
-                  {f.display_name}
-                </span>
-                <div className="flex-1 metric-bar">
-                  <div
-                    className="metric-bar-fill"
-                    style={{
-                      width: `${(f.importance / prediction.feature_importances[0].importance) * 100}%`,
-                      background: i < 3
-                        ? 'linear-gradient(90deg, var(--accent-cyan), var(--accent-purple))'
-                        : 'rgba(56, 189, 248, 0.35)',
-                    }}
-                  />
+          <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Model Analysis</span>
+        </div>
+        <div className="space-y-3.5">
+          {prediction.feature_importances.slice(0, 7).map((f, i) => (
+            <div key={f.feature} className="flex items-center gap-3">
+              <span className="text-[12px] w-[110px] truncate" style={{ color: 'var(--text-secondary)' }}>
+                {f.display_name}
+              </span>
+              <div className="flex-1 metric-bar">
+                <div
+                  className="metric-bar-fill"
+                  style={{
+                    width: `${(f.importance / prediction.feature_importances[0].importance) * 100}%`,
+                    background: i < 3
+                      ? 'linear-gradient(90deg, var(--accent-cyan), var(--accent-purple))'
+                      : 'rgba(56, 189, 248, 0.35)',
+                  }}
+                />
+              </div>
+              <span className="text-[11px] font-mono w-[40px] text-right" style={{ color: 'var(--text-muted)' }}>
+                {(f.importance * 100).toFixed(1)}%
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Recommendations Row */}
+      <div className="glass p-6 lg:p-8 animate-slide-up stagger-8">
+        <div className="flex items-center gap-2 mb-6">
+          <Lightbulb size={20} strokeWidth={1.5} style={{ color: 'var(--accent-amber)' }} />
+          <h2 className="text-[18px] md:text-[20px] font-bold">Recommendations</h2>
+        </div>
+        
+        {isRecsLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="glass-subtle p-5 flex items-start gap-4 animate-pulse border border-white/[0.02] bg-white/[0.005]">
+                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
+                  <Sparkles size={16} className="animate-pulse text-purple-400/40" />
                 </div>
-                <span className="text-[11px] font-mono w-[40px] text-right" style={{ color: 'var(--text-muted)' }}>
-                  {(f.importance * 100).toFixed(1)}%
-                </span>
+                <div className="flex-1 space-y-2.5">
+                  <div className="h-3.5 w-1/3 bg-white/10 rounded animate-shimmer" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%)', backgroundSize: '200% 100%' }} />
+                  <div className="h-2.5 w-3/4 bg-white/5 rounded animate-shimmer" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%)', backgroundSize: '200% 100%' }} />
+                </div>
+                <div className="h-5 w-12 bg-white/5 rounded-full" />
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Recommendations */}
-        <div className="lg:col-span-5 glass p-6 animate-slide-up stagger-8">
-          <div className="flex items-center gap-2 mb-5">
-            <Lightbulb size={15} strokeWidth={1.5} style={{ color: 'var(--accent-amber)' }} />
-            <h2 className="text-[14px] font-semibold">Recommendations</h2>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {prediction.recommendations.map((rec) => (
+              <div key={rec.id} className="glass-subtle p-5 flex items-start gap-4 transition-all hover:scale-[1.01] hover:border-white/10" style={{ border: '1px solid rgba(255,255,255,0.03)' }}>
+                <span className="text-[28px] md:text-[32px] mt-0.5 shrink-0 leading-none">{rec.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[15px] md:text-[16px] font-semibold" style={{ color: 'var(--foreground)' }}>{rec.title}</div>
+                  <div className="text-[12.5px] md:text-[13px] mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{rec.description}</div>
+                </div>
+                <span className="text-[10px] md:text-[11px] font-bold uppercase px-2.5 py-1 rounded-full shrink-0 tracking-wider"
+                  style={{
+                    background: rec.priority === 'high' ? 'rgba(248,113,113,0.12)' : rec.priority === 'medium' ? 'rgba(251,191,36,0.12)' : 'rgba(52,211,153,0.12)',
+                    color: rec.priority === 'high' ? '#f87171' : rec.priority === 'medium' ? '#fbbf24' : '#34d399',
+                    border: rec.priority === 'high' ? '1px solid rgba(248,113,113,0.2)' : rec.priority === 'medium' ? '1px solid rgba(251,191,36,0.2)' : '1px solid rgba(52,211,153,0.2)'
+                  }}
+                >{rec.priority}</span>
+              </div>
+            ))}
           </div>
-          
-          {isRecsLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="glass-subtle p-3.5 flex items-start gap-3 animate-pulse border border-white/[0.02] bg-white/[0.005]">
-                  <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
-                    <Sparkles size={12} className="animate-pulse text-purple-400/40" />
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3 w-1/3 bg-white/10 rounded animate-shimmer" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%)', backgroundSize: '200% 100%' }} />
-                    <div className="h-2 w-3/4 bg-white/5 rounded" />
-                  </div>
-                  <div className="h-4 w-10 bg-white/5 rounded-full" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-2.5">
-              {prediction.recommendations.map((rec) => (
-                <div key={rec.id} className="glass-subtle p-3.5 flex items-start gap-3">
-                  <span className="text-[18px] mt-0.5 shrink-0">{rec.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-medium" style={{ color: 'var(--foreground)' }}>{rec.title}</div>
-                    <div className="text-[11px] mt-0.5 leading-relaxed" style={{ color: 'var(--text-muted)' }}>{rec.description}</div>
-                  </div>
-                  <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full shrink-0"
-                    style={{
-                      background: rec.priority === 'high' ? 'rgba(248,113,113,0.1)' : rec.priority === 'medium' ? 'rgba(251,191,36,0.1)' : 'rgba(52,211,153,0.1)',
-                      color: rec.priority === 'high' ? '#f87171' : rec.priority === 'medium' ? '#fbbf24' : '#34d399',
-                    }}
-                  >{rec.priority}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Bottom — Factor Profile */}
