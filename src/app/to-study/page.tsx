@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { 
     DndContext, 
@@ -48,28 +48,31 @@ export default function ToStudyPage() {
         setIsMounted(true);
     }, []);
 
+    const hasFetched = useRef(false);
+
     // Load AI Suggested Tasks for Pro members
     useEffect(() => {
+        if (hasFetched.current) return;
+        if (!user?.is_premium || !token || !features || !prediction || isLoading) return;
+
         const fetchSuggestions = async () => {
-            if (user?.is_premium && token && features && prediction) {
-                setIsFetchingSuggestions(true);
-                try {
-                    const data = await apiGetGeminiSuggestedTasks(features, prediction.predicted_score, token);
-                    // Filter out suggestions that match existing tasks by title
-                    const existingTitles = tasks.map(t => t.title.toLowerCase());
-                    const filtered = data.filter(s => !existingTitles.includes(s.title.toLowerCase()));
-                    setSuggestions(filtered);
-                } catch (e) {
-                    console.warn('Failed to load suggested tasks:', e);
-                } finally {
-                    setIsFetchingSuggestions(false);
-                }
-            } else {
-                setSuggestions([]);
+            hasFetched.current = true;
+            setIsFetchingSuggestions(true);
+            try {
+                const data = await apiGetGeminiSuggestedTasks(features, prediction.predicted_score, token);
+                // Filter out suggestions that match existing tasks by title
+                const existingTitles = tasks.map(t => t.title.toLowerCase());
+                const filtered = data.filter(s => !existingTitles.includes(s.title.toLowerCase()));
+                setSuggestions(filtered);
+            } catch (e) {
+                console.warn('Failed to load suggested tasks:', e);
+                hasFetched.current = false; // Reset on failure to allow retry
+            } finally {
+                setIsFetchingSuggestions(false);
             }
         };
         fetchSuggestions();
-    }, [user?.is_premium, token, features, prediction, tasks.length]);
+    }, [user?.is_premium, token, features, prediction, isLoading, tasks]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -128,6 +131,9 @@ export default function ToStudyPage() {
     };
 
     const handleConfirmSuggestion = async (suggested: GeminiSuggestedTask) => {
+        // Dismiss locally FIRST to prevent double clicks and duplicate tasks
+        setSuggestions(prev => prev.filter(s => s.title !== suggested.title));
+
         try {
             await createTask({
                 title: suggested.title,
@@ -136,10 +142,10 @@ export default function ToStudyPage() {
                 status: 'todo',
                 due_date: suggested.due_date,
             });
-            // Dismiss locally
-            setSuggestions(prev => prev.filter(s => s.title !== suggested.title));
         } catch (e) {
             console.error('Failed to confirm suggestion:', e);
+            // Restore suggested task card if database creation failed
+            setSuggestions(prev => [suggested, ...prev]);
         }
     };
 
@@ -178,7 +184,31 @@ export default function ToStudyPage() {
                             let suggestedNodes: React.ReactNode = null;
                             if (col.id === 'todo') {
                                 if (user?.is_premium) {
-                                    if (suggestions.length > 0) {
+                                    if (isFetchingSuggestions) {
+                                        suggestedNodes = (
+                                            <div className="mt-4 pt-4 border-t border-white/[0.04] space-y-3">
+                                                <div className="flex items-center gap-1.5 px-1">
+                                                    <Sparkles size={12} style={{ color: 'var(--accent-purple)' }} className="animate-pulse" />
+                                                    <span className="text-[10px] uppercase tracking-wider font-semibold text-purple-400">AI is planning tasks...</span>
+                                                </div>
+                                                {Array.from({ length: 2 }).map((_, idx) => (
+                                                    <div key={idx} className="glass p-3.5 rounded-[14px] border border-dashed border-purple-500/10 bg-purple-500/[0.005] relative flex flex-col gap-2.5 animate-pulse">
+                                                        <div className="space-y-2">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'inline-block' }} />
+                                                                <div className="h-3 w-1/2 bg-white/10 rounded animate-shimmer" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%)', backgroundSize: '200% 100%' }} />
+                                                            </div>
+                                                            <div className="h-2 w-3/4 bg-white/5 rounded" />
+                                                        </div>
+                                                        <div className="flex gap-2 mt-1">
+                                                            <div className="flex-1 h-6 bg-white/5 rounded-lg" />
+                                                            <div className="w-8 h-6 bg-white/5 rounded-lg" />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    } else if (suggestions.length > 0) {
                                         suggestedNodes = (
                                             <div className="mt-4 pt-4 border-t border-white/[0.04] space-y-3">
                                                 <div className="flex items-center gap-1.5 px-1">
@@ -188,9 +218,13 @@ export default function ToStudyPage() {
                                                 {suggestions.map((s, idx) => (
                                                     <div key={idx} className="glass p-3.5 rounded-[14px] border border-dashed border-purple-500/20 bg-purple-500/[0.01] relative flex flex-col gap-2 animate-slide-up">
                                                         <div>
-                                                            <div className="flex items-center gap-1.5 mb-1">
-                                                                <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.priority === 'high' ? '#f87171' : s.priority === 'medium' ? '#fbbf24' : '#34d399', display: 'inline-block' }} />
-                                                                <h4 className="text-[12.5px] font-semibold" style={{ color: 'var(--foreground)' }}>{s.title}</h4>
+                                                            <div className="text-[12.5px] font-semibold" style={{ color: 'var(--foreground)' }}>
+                                                                <h4 className="block break-words leading-[1.3]">
+                                                                    <span className="inline-block mr-1.5 align-middle relative -top-[1px] shrink-0">
+                                                                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.priority === 'high' ? '#f87171' : s.priority === 'medium' ? '#fbbf24' : '#34d399', display: 'inline-block' }} />
+                                                                    </span>
+                                                                    {s.title}
+                                                                </h4>
                                                             </div>
                                                             <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                                                                 {s.description.replace('[AI Suggested]', '').trim()}

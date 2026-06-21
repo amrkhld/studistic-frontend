@@ -24,7 +24,7 @@ import { PremiumUpgradeModal } from '@/shared/components/PremiumUpgradeModal';
 
 export function DashboardView() {
   const { user, token } = useAuth();
-  const { features, prediction, isLoading: predLoading } = usePrediction();
+  const { features, prediction, isLoading: predLoading, isRecsLoading } = usePrediction();
   const { stats, isLoading: statsLoading } = useStats();
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -157,7 +157,21 @@ export function DashboardView() {
                 </button>
               </form>
               
-              {answer && (
+              {isPending && (
+                <div className="glass-subtle p-3 rounded-xl border border-purple-500/10 bg-purple-500/[0.01] animate-pulse flex flex-col gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Loader2 size={11} className="animate-spin text-purple-400" />
+                    <span className="text-[9px] uppercase tracking-wider font-semibold text-purple-400">AI Advisor is thinking...</span>
+                  </div>
+                  <div className="space-y-1.5 mt-0.5">
+                    <div className="h-2 w-full bg-white/10 rounded animate-shimmer" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%)', backgroundSize: '200% 100%' }} />
+                    <div className="h-2 w-[90%] bg-white/10 rounded animate-shimmer" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%)', backgroundSize: '200% 100%' }} />
+                    <div className="h-2 w-[60%] bg-white/5 rounded" />
+                  </div>
+                </div>
+              )}
+              
+              {answer && !isPending && (
                 <div className="glass-subtle p-3 rounded-xl border border-white/[0.04] bg-white/[0.01] animate-fade-in max-h-36 overflow-y-auto">
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <Sparkles size={11} style={{ color: 'var(--accent-cyan)' }} />
@@ -258,23 +272,41 @@ export function DashboardView() {
             <Lightbulb size={15} strokeWidth={1.5} style={{ color: 'var(--accent-amber)' }} />
             <h2 className="text-[14px] font-semibold">Recommendations</h2>
           </div>
-          <div className="space-y-2.5">
-            {prediction.recommendations.map((rec) => (
-              <div key={rec.id} className="glass-subtle p-3.5 flex items-start gap-3">
-                <span className="text-[18px] mt-0.5 shrink-0">{rec.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-medium" style={{ color: 'var(--foreground)' }}>{rec.title}</div>
-                  <div className="text-[11px] mt-0.5 leading-relaxed" style={{ color: 'var(--text-muted)' }}>{rec.description}</div>
+          
+          {isRecsLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="glass-subtle p-3.5 flex items-start gap-3 animate-pulse border border-white/[0.02] bg-white/[0.005]">
+                  <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                    <Sparkles size={12} className="animate-pulse text-purple-400/40" />
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-1/3 bg-white/10 rounded animate-shimmer" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%)', backgroundSize: '200% 100%' }} />
+                    <div className="h-2 w-3/4 bg-white/5 rounded" />
+                  </div>
+                  <div className="h-4 w-10 bg-white/5 rounded-full" />
                 </div>
-                <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full shrink-0"
-                  style={{
-                    background: rec.priority === 'high' ? 'rgba(248,113,113,0.1)' : rec.priority === 'medium' ? 'rgba(251,191,36,0.1)' : 'rgba(52,211,153,0.1)',
-                    color: rec.priority === 'high' ? '#f87171' : rec.priority === 'medium' ? '#fbbf24' : '#34d399',
-                  }}
-                >{rec.priority}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {prediction.recommendations.map((rec) => (
+                <div key={rec.id} className="glass-subtle p-3.5 flex items-start gap-3">
+                  <span className="text-[18px] mt-0.5 shrink-0">{rec.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-medium" style={{ color: 'var(--foreground)' }}>{rec.title}</div>
+                    <div className="text-[11px] mt-0.5 leading-relaxed" style={{ color: 'var(--text-muted)' }}>{rec.description}</div>
+                  </div>
+                  <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full shrink-0"
+                    style={{
+                      background: rec.priority === 'high' ? 'rgba(248,113,113,0.1)' : rec.priority === 'medium' ? 'rgba(251,191,36,0.1)' : 'rgba(52,211,153,0.1)',
+                      color: rec.priority === 'high' ? '#f87171' : rec.priority === 'medium' ? '#fbbf24' : '#34d399',
+                    }}
+                  >{rec.priority}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

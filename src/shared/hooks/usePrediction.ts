@@ -99,6 +99,7 @@ export function usePrediction() {
     const [error, setError] = useState<string | null>(null);
     const [isPredicting, setIsPredicting] = useState(false);
     const [latestPredictionResult, setLatestPredictionResult] = useState<PredictionResult | null>(null);
+    const [isRecsLoading, setIsRecsLoading] = useState(false);
 
     /**
      * Fetch cached data only — loads saved features + latest prediction from history.
@@ -162,34 +163,30 @@ export function usePrediction() {
             }
 
             // If we have a cached prediction, use it; otherwise fall back to mock
+            let basePred: PredictionResult;
             if (cachedPrediction) {
-                if (user?.is_premium && token) {
-                    try {
-                        const geminiRecs = await apiGetGeminiRecommendations(userFeatures, cachedPrediction.predicted_score, token);
-                        if (geminiRecs && geminiRecs.length > 0) {
-                            cachedPrediction.recommendations = geminiRecs;
-                        }
-                    } catch (e) {
-                        console.warn('Failed to load Gemini recommendations for cache:', e);
-                    }
-                }
-                setPrediction(cachedPrediction);
+                basePred = cachedPrediction;
             } else {
-                // No cached prediction exists (new user or never predicted)
-                // Fall back to mock data so the UI isn't empty
-                const mockPred = buildMockPrediction();
-                if (user?.is_premium && token) {
-                    try {
-                        const geminiRecs = await apiGetGeminiRecommendations(userFeatures, mockPred.predicted_score, token);
-                        if (geminiRecs && geminiRecs.length > 0) {
-                            mockPred.recommendations = geminiRecs;
-                        }
-                    } catch (e) {
-                        console.warn('Failed to load Gemini recommendations for mock cache:', e);
-                    }
-                }
-                setPrediction(mockPred);
+                basePred = buildMockPrediction();
                 if (!token) setError('Using offline data');
+            }
+
+            setPrediction(basePred);
+            setIsLoading(false);
+
+            // Fetch Gemini recommendations in the background
+            if (user?.is_premium && token) {
+                setIsRecsLoading(true);
+                try {
+                    const geminiRecs = await apiGetGeminiRecommendations(userFeatures, basePred.predicted_score, token);
+                    if (geminiRecs && geminiRecs.length > 0) {
+                        setPrediction(prev => prev ? { ...prev, recommendations: geminiRecs } : prev);
+                    }
+                } catch (e) {
+                    console.warn('Failed to load Gemini recommendations for cache:', e);
+                } finally {
+                    setIsRecsLoading(false);
+                }
             }
 
             // Populate history with fallbacks if empty (e.g. offline/mock environment)
@@ -269,20 +266,27 @@ export function usePrediction() {
 
         try {
             const result = await apiPredict(featuresToPredict, token);
-            if (user?.is_premium && token) {
-                try {
-                    const geminiRecs = await apiGetGeminiRecommendations(featuresToPredict, result.predicted_score, token);
-                    if (geminiRecs && geminiRecs.length > 0) {
-                        result.recommendations = geminiRecs;
-                    }
-                } catch (e) {
-                    console.warn('Failed to load Gemini recommendations for new prediction:', e);
-                }
-            }
             setPrediction(result);
             setLatestPredictionResult(result);
             if (newFeatures) {
                 setFeatures(newFeatures);
+            }
+
+            // Fetch Gemini recommendations in the background
+            if (user?.is_premium && token) {
+                setIsRecsLoading(true);
+                apiGetGeminiRecommendations(featuresToPredict, result.predicted_score, token)
+                    .then(geminiRecs => {
+                        if (geminiRecs && geminiRecs.length > 0) {
+                            setPrediction(prev => prev ? { ...prev, recommendations: geminiRecs } : prev);
+                        }
+                    })
+                    .catch(e => {
+                        console.warn('Failed to load Gemini recommendations for new prediction:', e);
+                    })
+                    .finally(() => {
+                        setIsRecsLoading(false);
+                    });
             }
 
             // Append to history state
@@ -296,6 +300,7 @@ export function usePrediction() {
             };
             setHistory(prev => [newHistoryItem, ...prev.filter(item => item.id !== newHistoryItem.id)]);
 
+            setIsPredicting(false);
             return result;
         } catch (err) {
             console.warn('Prediction API unavailable:', err);
@@ -303,7 +308,7 @@ export function usePrediction() {
             setIsPredicting(false);
             return null;
         }
-    }, [token, features]);
+    }, [token, features, user?.is_premium]);
 
     /**
      * Close the prediction modal overlay.
@@ -333,5 +338,5 @@ export function usePrediction() {
         fetchCached();
     }, [fetchCached]);
 
-    return { features, prediction, history, isLoading, error, isPredicting, latestPredictionResult, predictNow, simulatePrediction, closePredictionModal, refresh: fetchCached };
+    return { features, prediction, history, isLoading, error, isPredicting, latestPredictionResult, predictNow, simulatePrediction, closePredictionModal, refresh: fetchCached, isRecsLoading };
 }

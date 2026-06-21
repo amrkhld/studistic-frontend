@@ -65,12 +65,14 @@ export const TaskCardNode = forwardRef<HTMLDivElement, TaskCardNodeProps>(({
                 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                        <PriorityDot priority={task.priority} />
-                        <span className="text-[13px] font-semibold tracking-wide flex items-center gap-1.5" style={{ color: 'var(--foreground)' }}>
-                            <span className="truncate">{task.title}</span>
+                    <div className="text-[13px] font-semibold tracking-wide" style={{ color: 'var(--foreground)' }}>
+                        <span className="block break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere', lineHeight: '1.4' }}>
+                            <span className="inline-block mr-2 align-middle relative -top-[1.5px] shrink-0">
+                                <PriorityDot priority={task.priority} />
+                            </span>
+                            {task.title}
                             {isSuggested && (
-                                <Sparkles size={11} className="text-purple-400 animate-pulse shrink-0" style={{ color: 'var(--accent-purple)' }} />
+                                <Sparkles size={11} className="inline-block text-purple-400 animate-pulse ml-1.5 relative -top-[1px] shrink-0" style={{ color: 'var(--accent-purple)' }} />
                             )}
                         </span>
                     </div>
