@@ -230,42 +230,8 @@ export function DashboardView() {
         ))}
       </div>
 
-      {/* Feature Importance Row */}
-      <div className="glass p-6 animate-slide-up stagger-7">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
-            <Activity size={15} strokeWidth={1.5} style={{ color: 'var(--accent-cyan)' }} />
-            <h2 className="text-[14px] font-semibold">Top Performance Factors</h2>
-          </div>
-          <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Model Analysis</span>
-        </div>
-        <div className="space-y-3.5">
-          {prediction.feature_importances.slice(0, 7).map((f, i) => (
-            <div key={f.feature} className="flex items-center gap-3">
-              <span className="text-[12px] w-[110px] truncate" style={{ color: 'var(--text-secondary)' }}>
-                {f.display_name}
-              </span>
-              <div className="flex-1 metric-bar">
-                <div
-                  className="metric-bar-fill"
-                  style={{
-                    width: `${(f.importance / prediction.feature_importances[0].importance) * 100}%`,
-                    background: i < 3
-                      ? 'linear-gradient(90deg, var(--accent-cyan), var(--accent-purple))'
-                      : 'rgba(56, 189, 248, 0.35)',
-                  }}
-                />
-              </div>
-              <span className="text-[11px] font-mono w-[40px] text-right" style={{ color: 'var(--text-muted)' }}>
-                {(f.importance * 100).toFixed(1)}%
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Recommendations Row */}
-      <div className="glass p-6 lg:p-8 animate-slide-up stagger-8">
+      <div className="glass p-6 lg:p-8 animate-slide-up stagger-7">
         <div className="flex items-center gap-2 mb-6">
           <Lightbulb size={20} strokeWidth={1.5} style={{ color: 'var(--accent-amber)' }} />
           <h2 className="text-[18px] md:text-[20px] font-bold">Recommendations</h2>
@@ -306,6 +272,40 @@ export function DashboardView() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Feature Importance Row */}
+      <div className="glass p-6 animate-slide-up stagger-8">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <Activity size={15} strokeWidth={1.5} style={{ color: 'var(--accent-cyan)' }} />
+            <h2 className="text-[14px] font-semibold">Top Performance Factors</h2>
+          </div>
+          <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Model Analysis</span>
+        </div>
+        <div className="space-y-3.5">
+          {prediction.feature_importances.slice(0, 7).map((f, i) => (
+            <div key={f.feature} className="flex items-center gap-3">
+              <span className="text-[12px] w-[110px] truncate" style={{ color: 'var(--text-secondary)' }}>
+                {f.display_name}
+              </span>
+              <div className="flex-1 metric-bar">
+                <div
+                  className="metric-bar-fill"
+                  style={{
+                    width: `${(f.importance / prediction.feature_importances[0].importance) * 100}%`,
+                    background: i < 3
+                      ? 'linear-gradient(90deg, var(--accent-cyan), var(--accent-purple))'
+                      : 'rgba(56, 189, 248, 0.35)',
+                  }}
+                />
+              </div>
+              <span className="text-[11px] font-mono w-[40px] text-right" style={{ color: 'var(--text-muted)' }}>
+                {(f.importance * 100).toFixed(1)}%
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Bottom — Factor Profile */}
