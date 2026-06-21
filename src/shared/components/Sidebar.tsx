@@ -109,7 +109,7 @@ export function Sidebar() {
               <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--foreground)' }}>Studistic Pro</span>
             </div>
             <p className="text-[10px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              Unlock advanced predictions & unlimited tracking.
+              Unlock the AI Consultant, Gemini recommendations, and suggested study tasks.
             </p>
             <button
               onClick={() => setIsUpgradeOpen(true)}

@@ -709,17 +709,17 @@ export function ProfileView() {
                   Unlock the full potential of Studistic's AI core
                 </h3>
                 <p className="text-[12px] max-w-[580px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  Get access to deep neural network analysis, track up to 100+ predictions, and receive custom personalized AI study guides designed to elevate your grade progression.
+                  Unlock real-time academic advising with our AI Consultant, receive dynamic recommendations curated by Gemini 2.0, and manage AI-suggested weekly tasks on your Kanban board.
                 </p>
                 <div className="flex flex-wrap gap-4 pt-1">
                   <span className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--accent-cyan)' }}>
-                    <CheckCircle2 size={13} strokeWidth={2} /> Deep Neural Network Mode
+                    <CheckCircle2 size={13} strokeWidth={2} /> AI Academic Consultant
                   </span>
                   <span className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--accent-purple)' }}>
-                    <CheckCircle2 size={13} strokeWidth={2} /> Extended 100+ History Logs
+                    <CheckCircle2 size={13} strokeWidth={2} /> LLM Recommendations
                   </span>
                   <span className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--accent-green)' }}>
-                    <CheckCircle2 size={13} strokeWidth={2} /> Personalized AI Guidance
+                    <CheckCircle2 size={13} strokeWidth={2} /> AI Suggested Kanban Cards
                   </span>
                 </div>
               </div>

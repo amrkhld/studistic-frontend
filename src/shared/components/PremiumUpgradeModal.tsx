@@ -137,18 +137,18 @@ export function PremiumUpgradeModal({ isOpen, onClose }: PremiumUpgradeModalProp
               {[
                 {
                   icon: Brain,
-                  title: 'Advanced ML Predictor',
-                  desc: 'Unlock deep neural network calculations for highly calibrated predictions.'
-                },
-                {
-                  icon: TrendingUp,
-                  title: 'Extended Score Progression',
-                  desc: 'Store, trace, and analyze up to 100+ predictions in your history.'
+                  title: 'AI Academic Consultant',
+                  desc: 'Ask specific questions about study strategies, time management, or sleep habits to receive real-time coaching advice.'
                 },
                 {
                   icon: Zap,
-                  title: 'AI Smart Insights',
-                  desc: 'Get personalized, dynamic suggestions to raise performance.'
+                  title: 'LLM-Powered Recommendations',
+                  desc: 'Get personalized recommendations generated dynamically by Gemini 2.0 based on your unique academic feature profile.'
+                },
+                {
+                  icon: CheckCircle2,
+                  title: 'AI Suggested Kanban Cards',
+                  desc: 'Receive suggested actionable tasks on your Kanban board and confirm them to save them directly to Supabase in one click.'
                 }
               ].map((b, i) => (
                 <div key={i} className="flex gap-3 p-3 rounded-xl transition-colors hover:bg-white/[0.02]"
